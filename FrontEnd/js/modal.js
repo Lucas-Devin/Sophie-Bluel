@@ -1,19 +1,86 @@
-const categories = []
+async function getWorks(){
+  const result = await fetch('http://localhost:5678/api/works')
+  return result.json()
+}
+
+function callResetForm(modalPhotoBox){
+  const modalphotoBoxEmpty = createElementWithClasses('div', ['modalphotoBoxEmpty']);
+  modalPhotoBox.appendChild(modalphotoBoxEmpty);
+  // Icon
+  const modalphotoBoxEmptyIcon = createElementWithClasses('i', ['fa-sharp', 'fa-regular', 'fa-image']);
+  modalphotoBoxEmpty.appendChild(modalphotoBoxEmptyIcon);
+  // Info text for the picture 
+  const modalphotoBoxEmptyText = createElementWithClasses('p', ['modalPhotoBoxEmptyText']);
+  modalphotoBoxEmptyText.textContent = 'jpeg, png : 4mo max';
+  modalphotoBoxEmpty.appendChild(modalphotoBoxEmptyText);
+}
+ // function of delete elements of gallery
+ function deleteGalleryElement(imageId, figureModale,miniGallery) {
+  const deleteButton = createElementWithClasses('div', ['trashBox']);
+  const token = localStorage.getItem('token');
+  // call to API for delete
+  fetch(`http://localhost:5678/api/works/${imageId}`, {
+    method: 'DELETE',
+    headers: {
+      'accept': 'application/json',
+      'content-type': 'application/json; charset=UTF-8',
+      'authorization': `Bearer ${token}`
+    },
+  })
+    .then(() => {
+      miniGallery.removeChild(figureModale);
+      init();
+    })
+}
+
+
+function displayMiniGallery(works){
+  const miniGallery = document.getElementsByClassName('miniGallery')[0];
+  miniGallery.innerHTML="";//empty to replace elements 
+  works.forEach(function (miniWork) {// on elements of categories
+    const miniImageUrl = miniWork.imageUrl;
+    const miniTitle = miniWork.title;
+    const imageId = miniWork.id;
+
+    const figureModale = createElementWithClasses('figure', ['figureBox']);
+
+    const imageModale = document.createElement('img');
+    imageModale.src = miniImageUrl;
+    imageModale.classList.add('miniImage');
+    figureModale.appendChild(imageModale);
+
+    const deleteButton = createElementWithClasses('div', ['trashBox']);
+    const deleteIcon = createElementWithClasses('i', ['fa-solid', 'fa-trash-can']);
+    deleteButton.appendChild(deleteIcon);
+    figureModale.appendChild(deleteButton);
+
+    const textModaleFigure = createElementWithClasses('figcaption', ['textModaleFigure']);
+    textModaleFigure.textContent = 'éditer';
+    figureModale.appendChild(textModaleFigure);
+
+    miniGallery.appendChild(figureModale);
+
+    // event for delete element 
+    deleteButton.addEventListener('click', function () {
+      deleteGalleryElement(imageId, figureModale,miniGallery);
+    });
+  });
+}
 
 function createElementWithClasses(tagName, classes) {
   const element = document.createElement(tagName);
   element.classList.add(...classes);
   return element;
-  //fonction permettant d'éviter d'écrire classList.add à chaque fois
+  //don't have to write classList.add to each element 
 }
-// Fonction pour fermer la modale
+// close modale
 function closeModal() {
   const modalOpen = document.getElementById('modal');
   modalOpen.style.display = 'none';
   resetModalState();
   window.removeEventListener('click', closeModal);
 }
-// Fonction pour ouvrir la deuxième modale
+//open second modale
 function openSecondModal() {
   const modalContent = document.querySelector('.modalContent');
   const addPhotoModal = document.querySelector('.modalContentPhoto');
@@ -22,7 +89,7 @@ function openSecondModal() {
   modalContent.style.display = 'none';
   addPhotoModal.style.display = 'block';
 }
-// Fonction pour réinitialiser l'état des modales
+// for reset modale state
 function resetModalState() {
   const modalContent = document.querySelector('.modalContent');
   const addPhotoModal = document.querySelector('.modalContentPhoto');
@@ -31,22 +98,8 @@ function resetModalState() {
   addPhotoModal.style.display = 'none';
   modalPhotoBoxEmptyForm.reset();
 }
-/*function createGalleryElement() {
-  const token = localStorage.getItem('token');
-  // Appel à l'API pour poster images
-  fetch('http://localhost:5678/api/works', {
-    method: 'POST',
-    headers: {
-      'accept': 'application/json',
-      'content-type': 'application/json; charset=UTF-8',
-      'authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-    })
-  })
-}*/
 
-// Appel à l'API
+// call to the API
 fetch('http://localhost:5678/api/works')
   .then(function (response) {
     if (response.ok) {
@@ -85,8 +138,7 @@ fetch('http://localhost:5678/api/works')
     const miniGallery = createElementWithClasses('div', ['miniGallery']);
     modalContent.appendChild(miniGallery);
 
-    works.forEach(function (miniWork) {// boucle sur les elements des categories
-      categories.push(miniWork.category);//recuperer categories avec id et nom pour mettre dans le nom en haut(tab)
+    works.forEach(function (miniWork) {// on elements of categories
       const miniImageUrl = miniWork.imageUrl;
       const miniTitle = miniWork.title;
       const imageId = miniWork.id;
@@ -109,30 +161,12 @@ fetch('http://localhost:5678/api/works')
 
       miniGallery.appendChild(figureModale);
 
-      // Ajout d'un gestionnaire d'événements pour la suppression d'un élément
+      // adding event listener for delete element
       deleteButton.addEventListener('click', function () {
-        deleteGalleryElement(imageId, figureModale);
+        deleteGalleryElement(imageId, figureModale,miniGallery);
       });
     });
-
-    // Fonction de suppression des éléments de la galerie
-    function deleteGalleryElement(imageId, figureModale) {
-      const deleteButton = createElementWithClasses('div', ['trashBox']);
-      const token = localStorage.getItem('token');
-      // Appel à l'API pour delete
-      fetch(`http://localhost:5678/api/works/${imageId}`, {
-        method: 'DELETE',
-        headers: {
-          'accept': 'application/json',
-          'content-type': 'application/json; charset=UTF-8',
-          'authorization': `Bearer ${token}`
-        },
-      })
-        .then(() => {
-          miniGallery.removeChild(figureModale);
-        })
-    }
-    // Deuxième modale
+    // Seconde modale
     const addPhotoModal = createElementWithClasses('div', ['modalContentPhoto']);
     addPhotoModal.style.display = 'none';
     modalOpen.appendChild(addPhotoModal);
@@ -156,15 +190,7 @@ fetch('http://localhost:5678/api/works')
     const modalPhotoBox = createElementWithClasses('div', ['modalPhotoBox']);
     modalContentPhoto.appendChild(modalPhotoBox);
 
-    const modalphotoBoxEmpty = createElementWithClasses('div', ['modalphotoBoxEmpty']);
-    modalPhotoBox.appendChild(modalphotoBoxEmpty);
-    // Icône
-    const modalphotoBoxEmptyIcon = createElementWithClasses('i', ['fa-sharp', 'fa-regular', 'fa-image']);
-    modalphotoBoxEmpty.appendChild(modalphotoBoxEmptyIcon);
-    // Texte informatif
-    const modalphotoBoxEmptyText = createElementWithClasses('p', ['modalPhotoBoxEmptyText']);
-    modalphotoBoxEmptyText.textContent = 'jpeg, png : 4mo max';
-    modalphotoBoxEmpty.appendChild(modalphotoBoxEmptyText);
+    callResetForm(modalPhotoBox);
 
     const modalPhotoBoxEmptyForm = createElementWithClasses('form', ['modalPhotoBoxForm']);
     modalContentPhoto.appendChild(modalPhotoBoxEmptyForm);
@@ -186,23 +212,21 @@ fetch('http://localhost:5678/api/works')
     categorySelect.setAttribute('name', 'category');
     modalPhotoBoxEmptyForm.appendChild(categorySelect);
 
-    // Récupérer les catégories distinctes
-    //const distinctCategories = [...new Set(categories.map(category => category.name))];
-
-    // le select doit etre vide a l'etat initial et afficher les options apres
+    // for each categories
+    // select should be empty and show elements on click only
     const emptyOption = document.createElement('option');
     emptyOption.value = '';
     categorySelect.appendChild(emptyOption);
 
 
-    fetch('http://localhost:5678/api/categories')
+    fetch('http://localhost:5678/api/categories')// used for create select button
       .then(function (response) {
         if (response.ok) {
           return response.json();
         }
       })
       .then(function (categories) {
-        // Ajouter les options de catégories
+        // Adding options of catégories
         categories.forEach(function (category) {
           const option = document.createElement('option');
           option.value = category.id;
@@ -210,7 +234,6 @@ fetch('http://localhost:5678/api/works')
           categorySelect.appendChild(option);
         });
       })
-
     const imageInput = createElementWithClasses('input', ['modalPhotoBoxInput']);
     imageInput.setAttribute('type', 'file');
     imageInput.setAttribute('name', 'image');
@@ -219,58 +242,58 @@ fetch('http://localhost:5678/api/works')
     // Cacher le bouton de parcourir par défaut
     imageInput.style.display = 'none';
 
-    // Afficher l'image miniature sélectionnée
+    // Show picture selected resized
     imageInput.addEventListener('change', function (event) {
       event.preventDefault();
-      const file = event.target.files[0];
-      const reader = new FileReader();
+      const file = event.target.files[0];//for the first files selected[0]
+      const reader = new FileReader();//to read file selected by user
 
-      reader.onload = function (event) {
+      reader.onload = function (event) {//file download 
         const imageUrl = event.target.result;
 
         const backgroundDiv = createElementWithClasses('div', ['backgroundColor']);
         const imageModale = document.createElement('img');
-        imageModale.src = imageUrl;
+        imageModale.src = imageUrl;// insert image 
         imageModale.classList.add('miniImagePreview');
 
         backgroundDiv.appendChild(imageModale);
 
-        // Ajouter la div au modalPhotoBox
-        modalPhotoBox.innerHTML = ''; // Supprimer les éléments précédents
+        // adding div to modalPhotoBox
+        modalPhotoBox.innerHTML = ''; // delete elements 
         modalPhotoBox.appendChild(backgroundDiv);
 
-        // Masquer le bouton "+ Ajouter photo"
+        // hidding button "+ Ajouter photo"
         addButton.style.display = 'none';
       };
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file);//transform url of image (base64) to <img>
     });
 
-    // Créer le bouton "+ Ajouter photo"
+    // Create button "+ Ajouter photo"
     const addButton = createElementWithClasses('button', ['modalPhotoBoxEmptyButton']);
     addButton.textContent = '+ Ajouter photo';
     modalPhotoBoxEmptyForm.appendChild(addButton);
 
-    // Lorsque le bouton "+ Ajouter photo" est cliqué
+    // button "+ Ajouter photo" is clicked
     addButton.addEventListener('click', function (event) {
       event.preventDefault();
       imageInput.click();
     });
 
-    // Création de l'élément de décoration
+    // element for decorate modale
     const decoElementModalePhoto = createElementWithClasses('div', ['decoElementModalePhoto']);
     modalContentPhoto.appendChild(decoElementModalePhoto);
 
-    // Création du bouton de soumission
+    // submit button 
     const submitButton = createElementWithClasses('button', ['validateButton']);
     submitButton.textContent = 'Valider';
     submitButton.type = 'submit';
 
-    // Ajout du bouton au formulaire
+    // adding button to the form
     modalPhotoBoxEmptyForm.appendChild(submitButton);
 
     function sendNewGalleryElement(event) {
-      event.preventDefault(); // Empêche le comportement par défaut du bouton de soumission
+      event.preventDefault(); // to avoid submit button default 
       const token = localStorage.getItem('token');
       // Préparer les données à envoyer
       const requestData = new FormData()
@@ -278,7 +301,7 @@ fetch('http://localhost:5678/api/works')
       requestData.append('image', imageInput.files[0]);
       requestData.append('category', parseInt(categorySelect.value));
 
-      // Envoyer la requête POST à l'API pour enregistrer les données
+      // send POST request to the API 
       fetch('http://localhost:5678/api/works', {
         method: 'POST',
         headers: {
@@ -295,10 +318,13 @@ fetch('http://localhost:5678/api/works')
           }
         })
         .then(function (data) {
-          console.log('Données enregistrées avec succès:', data);
           closeModal();
-          // Réinitialiser le formulaire après l'enregistrement des données
-          modalPhotoBoxEmptyForm.reset();
+          modalPhotoBox.innerHTML='';
+          // form to zero after sending 
+          callResetForm(modalPhotoBox);
+          addButton.style.display = 'block';
+          init();
+
         })
         .catch(function (error) {
           alert('Merci de remplir tous les Champs');
@@ -306,27 +332,4 @@ fetch('http://localhost:5678/api/works')
     }
 
     submitButton.addEventListener('click', sendNewGalleryElement);
-
-    /******function updateSubmitButton() {
-      if (titleInput.value.trim() !== '' && categorySelect.value !== '' && imageInput.files.length > 0) {
-        submitButton.disabled = false;
-        submitButton.classList.add('valid');
-      } else {
-        submitButton.disabled = true;
-        submitButton.classList.remove('valid');
-      }
-    }
-    
-    imageInput.addEventListener('change', function (event) {
-    
-      updateSubmitButton();
-    });
-    
-    titleInput.addEventListener('input', function () {
-      updateSubmitButton();
-    });
-    
-    categorySelect.addEventListener('input', function () {
-      updateSubmitButton();
-    });******/
   })

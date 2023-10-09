@@ -32,6 +32,7 @@ const displayGallery = (works) => {
   }
     displayGallery(filteredWorks);
   }
+  function init(){// to init the elements call by API (img, text...)
   //call to the api
   fetch('http://localhost:5678/api/works')
     .then(function (response) {
@@ -74,6 +75,8 @@ const displayGallery = (works) => {
     .catch(function (error) {
   
     });
+  }
+  init();
   // identification ok editor mode on the index page
   const token = localStorage.getItem('token');
     if (token) {
@@ -141,6 +144,11 @@ const displayGallery = (works) => {
         button.addEventListener('click', function(event) {
           console.log('ok');
           modalOpen.style.display = "block";
+          getWorks()
+          .then(function(works){
+            displayMiniGallery(works);
+          })
+    
           window.addEventListener('click', function (event) {
             if (event.target === modalOpen) {
               closeModal();
